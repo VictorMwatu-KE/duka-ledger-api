@@ -97,7 +97,20 @@ app.put('/sale/:id', async (req, res) => {
 
 app.get('/sales', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM sales ORDER BY created_at DESC');
+    const { minAmount } = req.query;
+    
+    let query = 'SELECT * FROM sales ORDER BY id';
+    let params = [];
+    
+    if (minAmount) {
+      const num = Number(minAmount);
+      if (!isNaN(num) && num >= 0) {
+        query = 'SELECT * FROM sales WHERE amount >= $1 ORDER BY id';
+        params = [num];
+      }
+    }
+    
+    const result = await pool.query(query, params);
     res.json({ success: true, data: result.rows });
   } catch (err) {
     res.status(500).json({ error: err.message });
